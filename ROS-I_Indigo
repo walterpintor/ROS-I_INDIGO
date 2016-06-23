@@ -1,0 +1,125 @@
+#!/bin/bash
+# ROS-I Indigo Install - ARTC (Walter Pintor)
+
+# Run this straight off of github like this:
+# bash <(wget -qO- --no-cache )
+
+BLACK='\033[0;30m'
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+PURPLE='\033[0;35m'
+ORANGE='\033[0;33m' # or brown
+LIGHTGRAY='\033[0;37m'
+DARKGRAY='\033[1;30m'
+LIGHTBLUE='\033[1;34m'
+LIGHTGREEN='\033[1;32m'
+LIGHTCYAN='\033[1;36m'
+LIGHTRED='\033[1;31m'
+LIGHTPURPLE='\033[1;35m'
+YELLOW='\033[1;33m'
+WHITE='\033[1;37m'
+NC='\033[0m' # NoColor
+
+printf "\n${YELLOW}SETTING UP ROBOT OPERATING SYSTEM FOR ARTC ROBOTS!${NC}\n"
+printf "${YELLOW}---------------------------------------------------${NC}\n"
+printf "${GREEN}You will be asked for your password for running commands as root!${NC}\n"
+
+version=`lsb_release -sc`
+
+printf "\n${YELLOW}[Checking the Ubuntu version]${NC}\n"
+printf "${BLUE}Ubuntu ${version} found${NC}\n"
+case $version in
+  "saucy" | "trusty")
+;;
+*)
+printf "${RED}[This script will only work on ubuntu saucy(13.10) or trusty(14.04)]${NC}\n"
+exit 1
+esac
+
+# I never use this, but if you are having time issues maybe uncomment this.
+#printf "${YELLOW}[Installing chrony and setting the ntpdate]${NC}\n"
+#sudo apt-get install -y chrony
+#sudo ntpdate ntp.ubuntu.com
+
+if ! [ -e /etc/apt/sources.list.d/ros-latest.list ]
+    then
+    printf "${YELLOW}[Adding the ROS repository]${NC}\n"
+    # This should follow the official ROS install instructions closely.
+    # That is why there is a separate section for extra packages that I need for Arlo.
+    sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu ${version} main\" > /etc/apt/sources.list.d/ros-latest.list"
+    printf "${BLUE}[Checking the ROS keys]${NC}\n"
+    roskey=`apt-key list | grep -i "ROS builder"`
+    if [ -z "$roskey" ]
+        then
+        printf "${BLUE}[Adding the ROS keys]${NC}\n"
+        wget --quiet https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
+        printf "${BLUE} Completed. ${NC}\n"
+    fi
+fi
+
+printf "\n${YELLOW}[Updating & upgrading all existing Ubuntu packages]${NC}\n"
+sudo apt update
+sudo apt upgrade -y
+
+# This should follow the official ROS install instructions closely.
+# That is why there is a separate section for extra packages that I need for Arlo.
+if ! (dpkg -s ros-indigo-desktop-full|grep "Status: install ok installed" &> /dev/null)
+    then
+    printf "\n${YELLOW}[Installing ROS]${NC}\n"
+    sudo apt install -y ros-indigo-desktop-full
+    printf "${YELLOW}[ROS installed!]${NC}\n"
+    printf "\n${YELLOW}[rosdep init and python-rosinstall]${NC}\n"
+    if ! [ -e /etc/ros/rosdep/sources.list.d/20-default.list ]
+        then
+        sudo sh -c "rosdep init"
+    fi
+    printf "${BLUE}Running rosdep update . . .${NC}\n"
+    rosdep update
+    source /opt/ros/indigo/setup.bash
+    printf "${BLUE}Installing python-rosinstall:${NC}\n"
+    sudo apt install -y python-rosinstall
+    # END Offical ROS Install section
+fi
+
+# In case .bashrc wasn't set up, or you didn't reboot
+if ! (which catkin_make > /dev/null)
+    then
+    source /opt/ros/indigo/setup.bash
+fi
+
+printf "\n${YELLOW}[Installing Moveit! for ROS]${NC}\n"
+printf "${BLUE}Moveit! is required for ROS industrial.${NC}\n"
+
+
+printf "\n${YELLOW}[Installing Moveit! . . .]${NC}\n"
+sudo apt-get install ros-indigo-moveit-full
+source /opt/ros/indigo/setup.bash
+printf "${YELLOW}[Moveit! installed!]${NC}\n"
+
+printf "\n${YELLOW}[Let us install ROS-I]${NC}\n"
+printf "${BLUE}ROS industrial enables the usage of countless industrial brands!!${NC}\n"
+
+printf "\n${YELLOW}[But first, some extras . . .]${NC}\n"
+sudo apt-get install meld
+
+printf "${BLUE}!!ROS Industrial!!${NC}\n"
+sudo apt-get install ros-indigo-industrial-* ros-indigo-moveit-full ros-indigo-openni-* ros-indigo-rtt-ros-integration python-wstool
+
+printf "${BLUE}Let us install the trainings - We all have to learn someday . . .${NC}\n"
+cd
+git clone https://github.com/ros-industrial/industrial_training.git
+cd industrial_training
+git checkout indigo-devel
+echo "source $HOME/industrial_training/training/.training_units.bash" >> ~/.bashrc
+source ~/.bashrc
+
+
+done
+
+
+printf "\n${YELLOW}-----------------------------------${NC}\n"
+printf "${YELLOW}DONE${NC}\n"
+printf "${BLUE}I have a list of tests here: cat ${HOME}/catkin_ws/src/ArloBot/manualTests.txt${NC}\n"
+printf "${GREEN}ARTC ${BLUE} ROBOTICS${NC}\n"
