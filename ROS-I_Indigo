@@ -2,7 +2,7 @@
 # ROS-I Indigo Install - ARTC (Walter Pintor)
 
 # Run this straight off of github like this:
-# bash <(wget -qO- --no-cache https://github.com/walterpintor/ROS-I_INDIGO/blob/Indigo/ROS-I_Indigo.sh)
+# bash <(wget -qO- --no-cache https://github.com/walterpintor/ROS-I_INDIGO/blob/Indigo/ROS-I_Indigo)
 
 BLACK='\033[0;30m'
 BLUE='\033[0;34m'
